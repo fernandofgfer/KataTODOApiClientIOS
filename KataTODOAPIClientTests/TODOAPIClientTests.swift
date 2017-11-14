@@ -19,7 +19,7 @@ class TODOAPIClientTests: NocillaTestCase {
     fileprivate let anyTask = TaskDTO(userId: "1", id: "2", title: "Finish this kata", completed: true)
 
     func testSendsContentTypeHeader() {
-        stubRequest("GET", "http://jsonplaceholder.typicode.com/todos")
+        let _ = stubRequest("GET", "http://jsonplaceholder.typicode.com/todos")
             .withHeaders(["Content-Type": "application/json", "Accept": "application/json"])?
             .andReturn(200)
 
@@ -32,7 +32,7 @@ class TODOAPIClientTests: NocillaTestCase {
     }
 
     func testParsesTasksProperlyGettingAllTheTasks() {
-        stubRequest("GET", "http://jsonplaceholder.typicode.com/todos")
+        let _ = stubRequest("GET", "http://jsonplaceholder.typicode.com/todos")
             .andReturn(200)?
             .withJsonBody(fromJsonFile("getTasksResponse"))
 
