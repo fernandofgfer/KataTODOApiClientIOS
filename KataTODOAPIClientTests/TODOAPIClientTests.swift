@@ -75,13 +75,75 @@ class TODOAPIClientTests: NocillaTestCase {
     
         expect(self.getAll()?.error).toEventually(equal(TODOAPIClientError.itemNotFound))
     }
-        
     
+    func testReturnsItemWhenSearchByIdGettingTaskById(){
+        _ = stubRequest("GET", "http://jsonplaceholder.typicode.com/todos/1")
+            .andReturn(200)?
+            .withJsonBody(fromJsonFile("getTaskByIdResponse"))
+        
+        var result: Result<TaskDTO, TODOAPIClientError>?
+        apiClient.getTaskById("1") { response in
+            result = response
+        }
+        
+        expect(result?.value).toEventually(beAKindOf(TaskDTO.self))
+        assertTaskContainsExpectedValues(task: (result?.value)!)
+    }
+    
+    func testIfTaskThatISendRealyIsSending(){
+        _ = stubRequest("POST", "http://jsonplaceholder.typicode.com/todos")
+            .withBody(fromJsonFile("addTaskToUserRequest"))?
+            .andReturn(200)
+        
+        expect(self.addTaskToUser(userId: "1", title: "Finish this kata", completed: false)).toEventuallyNot(beNil())
+    }
+    
+    func testIfTaskThatIsSendReallyHaveBeenAdded(){
+        _ = stubRequest("POST", "http://jsonplaceholder.typicode.com/todos")
+            //.withBody(fromJsonFile("addTaskToUserRequest"))?
+            .andReturn(200)?
+            .withJsonBody(fromJsonFile("addTaskToUserResponse"))
+        
+        let result = self.addTaskToUser(userId: "1", title: "Finish this kata", completed: false)
+        expect(result).toEventuallyNot(beNil())
+        assertTaskContainsExpectedValues(task: (result?.value)!)
+    }
+    
+    func testReturnEmptyJsonWhenDeletingTaskCalled(){
+        
+    }
+    
+    func testErrorItemNotFoundWhenDeletingUnexistingTask(){
+        
+    }
+    
+    func testBodySendingProperlyUpdatingTaskCalled(){
+        
+    }
+    
+    func testReturnProperlyTaskUpdatingTaskCalled(){
+        
+    }
+    
+    func testErrorItemNotFoundWhenUpdatingUnexistedTask(){
+        
+    }
     
     private func getAll() -> Result<[TaskDTO], TODOAPIClientError>?{
         let networkCallDone = expectation(description: "asdsad")
         var result: Result<[TaskDTO], TODOAPIClientError>?
         apiClient.getAllTasks { (response) in
+            result = response
+            networkCallDone.fulfill()
+        }
+        wait(for: [networkCallDone], timeout: 2)
+        return result
+    }
+    
+    private func addTaskToUser(userId: String, title: String, completed: Bool) -> Result<TaskDTO, TODOAPIClientError>?{
+        let networkCallDone = expectation(description: "asdsad")
+        var result: Result<TaskDTO, TODOAPIClientError>?
+        apiClient.addTaskToUser(userId, title: title, completed: completed) { (response) in
             result = response
             networkCallDone.fulfill()
         }
