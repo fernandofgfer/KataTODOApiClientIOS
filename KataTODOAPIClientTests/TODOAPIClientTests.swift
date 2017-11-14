@@ -17,7 +17,7 @@ class TODOAPIClientTests: NocillaTestCase {
 
     fileprivate let apiClient = TODOAPIClient()
     fileprivate let anyTask = TaskDTO(userId: "1", id: "2", title: "Finish this kata", completed: true)
-
+    
     func testSendsContentTypeHeader() {
         let _ = stubRequest("GET", "http://jsonplaceholder.typicode.com/todos")
             .withHeaders(["Content-Type": "application/json", "Accept": "application/json"])?
@@ -56,7 +56,39 @@ class TODOAPIClientTests: NocillaTestCase {
 
         expect(result?.error).toEventually(equal(TODOAPIClientError.networkError))
     }
-
+    
+    func testReturnsUnkwonErrorIfThereIsUnknownErrorGettingAllTasks(){
+        _ = stubRequest("GET", "http://jsonplaceholder.typicode.com/todos")
+            .andReturn(414)
+        
+        var result: Result<[TaskDTO], TODOAPIClientError>?
+        apiClient.getAllTasks { response in
+            result = response
+        }
+        
+        expect(result?.error).toEventually(equal(TODOAPIClientError.unknownError(code: 414)))
+    }
+    
+    func testReturnsItemNotFoundIfThereIsErrorGettingAllTasks(){
+        _ = stubRequest("GET", "http://jsonplaceholder.typicode.com/todos")
+            .andReturn(404)
+    
+        expect(self.getAll()?.error).toEventually(equal(TODOAPIClientError.itemNotFound))
+    }
+        
+    
+    
+    private func getAll() -> Result<[TaskDTO], TODOAPIClientError>?{
+        let networkCallDone = expectation(description: "asdsad")
+        var result: Result<[TaskDTO], TODOAPIClientError>?
+        apiClient.getAllTasks { (response) in
+            result = response
+            networkCallDone.fulfill()
+        }
+        wait(for: [networkCallDone], timeout: 2)
+        return result
+    }
+    
     private func assertTaskContainsExpectedValues(task: TaskDTO) {
         expect(task.id).to(equal("1"))
         expect(task.userId).to(equal("1"))
